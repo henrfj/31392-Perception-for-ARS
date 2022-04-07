@@ -1,0 +1,26 @@
+<annotation>
+	<folder/>
+	<filename>56.jpg</filename>
+	<path>images//56.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>640</width>
+		<height>480</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>cardboard</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>75</xmin>
+			<ymin>117</ymin>
+			<xmax>508</xmax>
+			<ymax>372</ymax>
+		</bndbox>
+	</object>
+</annotation>
