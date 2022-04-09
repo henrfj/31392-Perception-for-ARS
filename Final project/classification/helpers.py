@@ -1,0 +1,161 @@
+import matplotlib.pyplot as plt # plotting
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import cv2
+import glob
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.decomposition import PCA
+# ANN
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+
+
+def import_images(path):
+    """
+    Extracts all images from path and adds to list.
+    Returns list of images as well as max-scale of any image.
+    """
+    imdir = path
+    ext = ['png', 'jpg', 'gif']
+    files = []
+    [files.extend(glob.glob(imdir + '*.' + e)) for e in ext]
+    images = [cv2.imread(file) for file in files]
+    max_size = 0
+    for _, img in enumerate(images):
+        w, h,_ = img.shape
+        if w>max_size:
+            max_size=w
+        if h>max_size:
+            max_size=h
+    return images, max_size
+
+def resize_and_flatten(images, padding=False, max_size=1024, output_size=128):
+    """
+    Takes a list of images, and returns flattened row-vectors (1, size),
+    or flatten col-vector (size, 1).
+    """
+    # Resize
+    resized_images = []
+    for _, img in enumerate(images): # Resize
+        # resize image
+        w, h,_ = img.shape
+        # Grayscale image
+        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        if padding:
+            # Add padding
+            top=(max_size-h)//2
+            bottom=(max_size-h)//2
+            left=(max_size-w)//2
+            right=(max_size-w)//2
+            borderType=cv2.BORDER_CONSTANT # cv2.BORDER_WRAP
+            value=[255, 255, 255] # White borders
+            img_gray = cv2.copyMakeBorder(img_gray, top, bottom, left, right, borderType, value=value)
+        # Finally We want a fixed-size image for input to ML
+        resized_images.append(cv2.resize(img_gray, (output_size, output_size), interpolation = cv2.INTER_AREA))
+
+    # Flatten 
+    flat_images = []
+    for _,matrix in enumerate(resized_images):
+        flat_images.append(matrix.flatten())
+    flat_images=np.asarray(flat_images)
+
+    return flat_images, resized_images
+
+def normalize(all_data, scaler_type="minmax"):
+    """
+    Input is a nxm array (n images flattened to size m)
+    or a list of such images: [nxm, nxm, ...]
+    returns a scaler fit on all the data, as well as scaled data.
+    """
+    stacked_data = np.concatenate((all_data), axis=0)
+    if scaler_type=="minmax":
+        scaler = MinMaxScaler().fit(stacked_data)
+    elif scaler_type=="std":
+        scaler = StandardScaler().fit(stacked_data)
+    else:
+        raise ValueError("No such scaler. Use 'minmax', or 'std'")
+
+    scaled = []
+    for data in all_data:
+        scaled.append(scaler.transform(data))
+    
+    return scaled, scaler
+
+def simple_normalize(data, scaler):
+    return scaler.transform(data)
+
+def reshape(images, vec_type="row"):
+    """
+    Reshape data to row or column vectors.
+    """
+    r, c = images.shape
+    if vec_type=="row":
+        return images.reshape((r, 1, c))
+    if vec_type=="col":
+        return images.reshape((r, c, 1))
+    else:
+        raise ValueError("no such vec_type. Choose between ¨row¨ or ¨col¨")
+
+def from_numpy_to_pd(data, labels):
+    """
+    Input is a list [data1, data2, ...] of row-data's,
+    and labels [label1, label2, ...] mathcing the list.append
+
+    returns a pandas dataframe containing all data and labels.
+    """
+    frames = []
+    for i,d in enumerate(data):
+        df = pd.DataFrame({'data':list(d), 'label': labels[i]})
+        frames.append(df)
+    
+    return pd.concat(frames)
+
+def flat_to_PCA(all_data, n_components=81, verbose=False):
+    """
+    "all_data" is a list of all data [data1, data2, ...].
+    n_components is dimensions of transform.
+
+    Should happen after flatten but before normalize
+    """
+    pca = PCA(n_components=n_components)
+    # Stack data for fitting PCA
+    stacked_data = np.concatenate((all_data), axis=0)
+    if stacked_data.shape[0] < n_components:
+        raise ValueError("n_components cannot be more than total datapoints.")
+    pca.fit(stacked_data)
+    transformed = []
+    for data in all_data:
+        transformed.append(pca.transform(data))
+
+    if verbose:
+        print("Explained by PCA:", sum(pca.explained_variance_ratio_))
+    return transformed, pca
+
+def simple_pca(data, pca):
+    return pca.transform(data)
+
+#############################
+######## ANN HELPERS ########
+#############################
+
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode="min", verbose=1, patience=50) # 50
+class PrintDot(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs):
+        if epoch % 100 == 0: print('')
+        print('.', end='')
+
+def plot_history_loss(hist):
+    plt.figure()
+    plt.xlabel('Epoch')
+    plt.ylabel('Cross entropy loss')
+    #plt.yscale("log")
+    plt.plot(hist['epoch'], hist['loss'], label='Train Error')
+    plt.plot(hist['epoch'], hist['val_loss'], label = 'Val Error')
+    plt.legend()
+
+def show_final_score(history):
+    hist = pd.DataFrame(history.history)
+    hist['epoch'] = history.epoch
+    display(hist.tail(1))
+    plot_history_loss(hist)
