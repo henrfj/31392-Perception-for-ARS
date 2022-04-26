@@ -243,7 +243,10 @@ def rotate_imgs(imgs, angle):
         rotated.append(cv2.warpAffine(im, rot_mat, im.shape[1::-1], flags=cv2.INTER_LINEAR))
     return rotated
 
-def store_images(imgs, path):
+def store_images(imgs, path, verbose=True):
     array = np.asarray(imgs)
+    if verbose:
+        print(array.shape)
     for i, img in enumerate(array):
-        cv2.imwrite(path+str(i)+".jpg", img)
+        named_path = path+"augmented"+str(i)+".jpg"
+        cv2.imwrite(named_path, img)
