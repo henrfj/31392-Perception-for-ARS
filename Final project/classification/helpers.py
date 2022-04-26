@@ -46,8 +46,7 @@ def flatten(images):
 
 def resize_and_flatten(images, padding=False, max_size=1024, output_size=128, flatten=True):
     """
-    Takes a list of images, and returns flattened row-vectors (1, size),
-    or flatten col-vector (size, 1).
+    Takes a list of images, and returns flattened vectors after resizing.
     """
     # Resize
     resized_images = []
@@ -76,7 +75,7 @@ def resize_and_flatten(images, padding=False, max_size=1024, output_size=128, fl
 
         return flat_images, resized_images
     else:
-        return resized_images
+        return np.asarray(resized_images)
 
 def normalize(all_data, scaler_type="minmax"):
     """
@@ -96,6 +95,38 @@ def normalize(all_data, scaler_type="minmax"):
     for data in all_data:
         scaled.append(scaler.transform(data))
     
+    return scaled, scaler
+
+def normalize_2D(all_data, scaler_type="minmax"):
+    """
+    Input is a nxmxm array, not flattened!
+    or a list of such images: [nxm, nxm, ...]
+    returns a scaler fit on all the data, as well as scaled data.
+    """
+
+    size = len(all_data[0][0]) # For reconstruction
+    
+    flat_data = []
+    for data in all_data:
+        flat_data.append(flatten(data))
+
+    stacked_data = np.concatenate((flat_data), axis=0)
+    if scaler_type=="minmax":
+        scaler = MinMaxScaler().fit(stacked_data)
+    elif scaler_type=="std":
+        scaler = StandardScaler().fit(stacked_data)
+    else:
+        raise ValueError("No such scaler. Use 'minmax', or 'std'")
+
+    # Scale and reconstruct the data
+    scaled = []
+    for data in flat_data:
+        scaled_row = []
+        scaled_data = scaler.transform(data)
+        for row in scaled_data:
+            scaled_row.append(row.reshape((size, size)))
+        scaled.append(scaled_row)
+
     return scaled, scaler
 
 def simple_normalize(data, scaler):
