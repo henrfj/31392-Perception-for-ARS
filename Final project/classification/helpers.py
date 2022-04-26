@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import matplotlib.pyplot as plt # plotting
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
@@ -30,7 +31,20 @@ def import_images(path):
             max_size=h
     return images, max_size
 
-def resize_and_flatten(images, padding=False, max_size=1024, output_size=128):
+def flatten(images):
+    """
+    Takes a list of images, and returns the flattened images (1, size),
+    ready for machine learning.
+    """
+    # Flatten 
+    flat_images = []
+    for _,matrix in enumerate(images):
+        flat_images.append(matrix.flatten())
+    flat_images=np.asarray(flat_images)
+    return flat_images
+
+
+def resize_and_flatten(images, padding=False, max_size=1024, output_size=128, flatten=True):
     """
     Takes a list of images, and returns flattened row-vectors (1, size),
     or flatten col-vector (size, 1).
@@ -53,14 +67,16 @@ def resize_and_flatten(images, padding=False, max_size=1024, output_size=128):
             img_gray = cv2.copyMakeBorder(img_gray, top, bottom, left, right, borderType, value=value)
         # Finally We want a fixed-size image for input to ML
         resized_images.append(cv2.resize(img_gray, (output_size, output_size), interpolation = cv2.INTER_AREA))
-
+    if flatten:
     # Flatten 
-    flat_images = []
-    for _,matrix in enumerate(resized_images):
-        flat_images.append(matrix.flatten())
-    flat_images=np.asarray(flat_images)
+        flat_images = []
+        for _,matrix in enumerate(resized_images):
+            flat_images.append(matrix.flatten())
+        flat_images=np.asarray(flat_images)
 
-    return flat_images, resized_images
+        return flat_images, resized_images
+    else:
+        return resized_images
 
 def normalize(all_data, scaler_type="minmax"):
     """
@@ -159,3 +175,75 @@ def show_final_score(history):
     hist['epoch'] = history.epoch
     display(hist.tail(1))
     plot_history_loss(hist)
+
+
+
+################################
+##### From computer vision #####
+################################
+
+def gaussianSmoothing(im, sigma): # From week 6
+    """
+    Returns the gaussian smoothed image I, and the image derivatives Ix and Iy.
+    """
+    # 1 obtain the kernels for gaussian and for differentiation.
+    g, gx, _ = gaussian1DKernel(sigma=sigma)
+    # 2 Filter the image in both directions and diff in both directions
+    I = cv2.filter2D(cv2.filter2D(im, -1, g), -1, g.T) # smooth I = g * g.T * I
+    # 3 Differentiate - d/dx I = g * gx.T * I 
+    Ix = cv2.filter2D(cv2.filter2D(im, -1, gx.T), -1, g)
+    Iy = cv2.filter2D(cv2.filter2D(im, -1, g.T), -1, gx)
+    return I, Ix, Iy
+    
+def gaussian1DKernel(sigma, rule=5, eps=0):
+    """
+    Returns 1D filter kernel g, and its derivative gx.
+    """
+    if eps:
+        filter_size=eps
+    else:
+        filter_size = np.ceil(sigma*rule)
+    x = np.arange(-filter_size, filter_size+1) # filter
+    # Make kernel
+    g = 1/(np.sqrt(2*np.pi*sigma**2)) * np.exp(-x**2 / (2*sigma**2))
+    #g /= g.sum() # Normalize filter to 1. No need with normalization factor
+    g = g.reshape(-1, 1) # Make it into a col vector
+    # Make the derivate of g.
+    # NB! Need the normalization term of the gaussian
+    gx = -(-x**2)/(sigma**2) * g[:,0]
+    gx = gx.reshape(-1, 1) # Make it into a col vector
+    return g, gx, x
+
+def scaleSpaced(imgs, sigma, n):
+    im_scales = []
+    for _, im in enumerate(imgs):
+        for i in range(1,n+1):
+            sig = sigma*2**i
+            blur, _, _ = gaussianSmoothing(im=im, sigma=sig)
+            im_scales.append(blur)
+    return im_scales
+
+def flipper(imgs, vertical=True, horizontal=False):
+    flipped = []
+    for _, im in enumerate(imgs):
+        if vertical and horizontal:
+            flipped.append(cv2.flip(im, 0))
+        if vertical:
+            flipped.append(cv2.flip(im, -1))
+        if horizontal:
+            flipped.append(cv2.flip(im, 1))
+    return flipped
+
+def rotate_imgs(imgs, angle):
+    rotated = []
+    for _, im in enumerate(imgs):
+        im = np.asarray(im)
+        image_center = tuple(np.array(im.shape[1::-1]) / 2)
+        rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+        rotated.append(cv2.warpAffine(im, rot_mat, im.shape[1::-1], flags=cv2.INTER_LINEAR))
+    return rotated
+
+def store_images(imgs, path):
+    array = np.asarray(imgs)
+    for i, img in enumerate(array):
+        cv2.imwrite(path+str(i)+".jpg", img)
