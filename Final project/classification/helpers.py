@@ -29,7 +29,10 @@ def import_images(path):
             max_size=w
         if h>max_size:
             max_size=h
-    return images, max_size
+    try:
+        return np.asarray(images)[:, :, :, 0], max_size
+    except IndexError:
+        return images, max_size
 
 def flatten(images):
     """
