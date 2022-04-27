@@ -11,6 +11,39 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+def from_raw_to_CNN(cups, boxes, books, cupsize, boxsize, booksize, resize=True):
+    # Reshape
+    if resize:
+        real_cups = resize_and_flatten(cups, padding=False, max_size=cupsize, output_size=128, flatten=False)
+        real_boxes = resize_and_flatten(boxes, padding=False, max_size=boxsize, output_size=128, flatten=False)
+        real_books = resize_and_flatten(books, padding=False, max_size=booksize, output_size=128, flatten=False)
+    else:
+        real_cups =cups.copy()
+        real_boxes=boxes.copy()
+        real_books=books.copy()
+    # Scale
+    real_cups = real_cups / 255
+    real_boxes = real_boxes / 255
+    real_books = real_books / 255
+    # Shape for KERAS
+    a, b, c = real_cups.shape
+    real_cups = real_cups.reshape((a,b,c,1))
+    a, b, c = real_boxes.shape
+    real_boxes = real_boxes.reshape((a,b,c,1))
+    a, b, c = real_books.shape
+    real_books = real_books.reshape((a,b,c,1))
+    # Targets cups, boxes = [0, 1]
+    cup_target = np.zeros((len(real_cups),))
+    box_target = np.ones((len(real_boxes),))
+    book_target = np.ones((len(real_books),))*2
+
+    # Combine the data
+    test_data = np.concatenate((real_cups, real_boxes, real_books))
+    test_targets = np.concatenate((cup_target, box_target, book_target))
+
+    print(test_data.shape, test_targets.shape)
+    return test_data, test_targets
+
 
 def import_images(path):
     """
