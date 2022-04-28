@@ -231,17 +231,29 @@ class PrintDot(tf.keras.callbacks.Callback):
 def plot_history_loss(hist):
     plt.figure()
     plt.xlabel('Epoch')
-    plt.ylabel('Cross entropy loss')
-    #plt.yscale("log")
+    plt.ylabel('Loss')
     plt.plot(hist['epoch'], hist['loss'], label='Train Error')
     plt.plot(hist['epoch'], hist['val_loss'], label = 'Val Error')
     plt.legend()
 
-def show_final_score(history):
+def plot_history_accuracy(hist):
+    plt.figure()
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    #plt.yscale("log")
+    plt.plot(hist['epoch'], hist['accuracy'], label='Train Acc')
+    plt.plot(hist['epoch'], hist['val_accuracy'], label = 'Val Acc')
+    plt.legend()
+
+
+def show_final_score(history, loss=True, accuracy=False):
     hist = pd.DataFrame(history.history)
     hist['epoch'] = history.epoch
     display(hist.tail(1))
-    plot_history_loss(hist)
+    if loss:
+        plot_history_loss(hist)
+    if accuracy:
+        plot_history_accuracy(hist)
 
 
 
