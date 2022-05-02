@@ -21,6 +21,14 @@ def f(u, sigma2, x):
     return 1/np.sqrt(2*np.pi*sigma2) * np.exp(-0.5* ((x-u)**2/sigma2))
     
 def offline_kalman(measurements):
+    """
+    Runs the kalman filter in offline mode.
+        - measurements expected to be a 2xN numpy array.
+    
+    Returns the filtered x-values as a 4xN numpy array.
+    """
+
+
     ### Initialize Kalman filter ###
     # The initial state (4x1).
     x = np.array([[0],# Position along the x-axis
