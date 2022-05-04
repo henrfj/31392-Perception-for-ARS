@@ -1,12 +1,1 @@
-## TODO
-* use the algorithms on the video (frame by frame)
-* try to create an undistorted and rectified video (seperately)
-* write documentation
-* in case we will solve it live, it might be handy to create some wrapper function that can be easily called from main
-
-## Changelog
-* MM25.04.22: rewritten into jupyter & functions, corrected few bugs, changed to correct folder names
-
-## v1
-* undistortion and rectification working on testing data
-* created folders undistorted, rectified, rectified-undistorted, undistorted-rectified
+Demo of calibration, the project continues in final folder
