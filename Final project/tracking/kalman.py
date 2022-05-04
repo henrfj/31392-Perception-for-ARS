@@ -1,5 +1,7 @@
+#from types import NoneType
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import stats
 
 def update(x, P, Z, H, R):
     ### Insert update function
@@ -20,14 +22,13 @@ def predict(x, P, F, u, Q):
 def f(u, sigma2, x):
     return 1/np.sqrt(2*np.pi*sigma2) * np.exp(-0.5* ((x-u)**2/sigma2))
     
-def offline_kalman(measurements):
+def offline_kalman(measurements, none_window=10):
     """
     Runs the kalman filter in offline mode.
         - measurements expected to be a 2xN numpy array.
     
     Returns the filtered x-values as a 4xN numpy array.
     """
-
 
     ### Initialize Kalman filter ###
     # The initial state (4x1).
@@ -62,25 +63,26 @@ def offline_kalman(measurements):
 
     # The measurement uncertainty.
     # How little do you want to trust the measurements?
-    R = 1*np.array([[1000, 0],
-                    [0, 1000]])
+    R = 1*np.array([[50, 0],
+                    [0, 50]])
 
     # Disturbance matrix
     # How little do you want to trust the model?
     Q = 1*np.array([[1, 0, 0, 0],
-                    [0, 50, 0, 0],
+                    [0, 1, 0, 0],
                     [0, 0, 1, 0],
-                    [0, 0, 0, 50]])
+                    [0, 0, 0, 1]])
 
     # State history
     xs = np.zeros((4, len(measurements[0])))
-
-    # Flag for new measurements
-    new_measurement = True
-
     for i in range(len(measurements[0])):
+        new_measurement = True
+
+        if measurements[0, i] is None:
+            new_measurement = False
+
         if new_measurement:
-            z = np.array([[measurements[0, i]],   # xpos
+            z = np.array([[measurements[0, i]], # xpos
                         [measurements[1, i]]])  # ypos
 
 
@@ -91,4 +93,21 @@ def offline_kalman(measurements):
         x, P = predict(x, P, F, u, Q)
         xs[:, i] = x.reshape((4,))
 
+        #################################################
+        ### Speed is const - so we can average it out ###
+        #################################################         
+        # Worst fit - fitted on occlusion data.
+        #x[1] = -2.6146684471289876
+        #x[3] = 1.5139821443624342 
+        
+        # Best fit! Fitted on non-occlusion.
+        #x[1] = -3.7072721104332675
+        #x[3] = 1.2003268965304754
+
+        #if i>100: # Sliding mean
+        #    #Using the mean
+        #    x[1] = stats.trim_mean(xs[1, -90:i], 0.1)
+        #    x[3] = stats.trim_mean(xs[3, -10:i], 0.1)
+            
+        
     return xs
