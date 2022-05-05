@@ -63,22 +63,18 @@ def offline_kalman(measurements, none_window=10):
 
     # The measurement uncertainty.
     # How little do you want to trust the measurements?
-    R = 1*np.array([[500, 0],
-                    [0, 500]])
+    R = 1*np.array([[50, 0],
+                    [0, 50]])
 
     # Disturbance matrix
     # How little do you want to trust the model?
     Q = 1*np.array([[1, 0, 0, 0],
-                    [0, 50, 0, 0],
+                    [0, 1, 0, 0],
                     [0, 0, 1, 0],
-                    [0, 0, 0, 50]])
+                    [0, 0, 0, 1]])
 
     # State history
     xs = np.zeros((4, len(measurements[0])))
-
-    # Flag for new measurements
-    
-
     for i in range(len(measurements[0])):
         new_measurement = True
 
@@ -108,4 +104,10 @@ def offline_kalman(measurements, none_window=10):
         #x[1] = -3.7072721104332675
         #x[3] = 1.2003268965304754
 
+        #if i>100: # Sliding mean
+        #    #Using the mean
+        #    x[1] = stats.trim_mean(xs[1, -90:i], 0.1)
+        #    x[3] = stats.trim_mean(xs[3, -10:i], 0.1)
+            
+        
     return xs
