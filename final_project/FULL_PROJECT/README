@@ -1,0 +1,5 @@
+To run the program, rectified images must be uploaded in following path format
+"conveyor_full_without/left/*.png"
+"conveyor_full_without/right/*.png"
+"conveyor_full_with/left/*.png"
+"conveyor_full_with/right/*.png"
