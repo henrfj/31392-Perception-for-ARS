@@ -146,6 +146,8 @@ class Kalman_tracker:
 
 if __name__ == "__main__":
     import glob
+    from tensorflow import keras
+    cnn_model = keras.models.load_model('C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/FULL_PROJECT/cnn_model_3');
     #####################################################################################################
     #images = glob.glob("video/sample/left/*.png")
 
@@ -166,14 +168,34 @@ if __name__ == "__main__":
     no_of_frames = len(images)-1
     print("Frames:", no_of_frames)
 
+    preds = ["cup", "box", "book"]
+
     # Init tracker
     tracker = Kalman_tracker(occlusion=True, Verbose=True)
     # The movie/image loop
     for i in range(no_of_frames):
         frame = cv2.imread(images[i]) 
         track_frame, filtered, measured, object = tracker.next_frame(frame)
+
+        # Test with some CNN model
+        if object is not None:
+            gray_object = np.array([
+                                    cv2.cvtColor(object, cv2.COLOR_RGB2GRAY).reshape((128, 128,1))
+                                    ])
+            #print(gray_object.shape)
+            prediction = cnn_model.predict(gray_object)[0]
+            cv2.putText(track_frame, "Prediciton: {}".format(preds[np.argmax(prediction)]),
+             (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+        else:
+            cv2.putText(track_frame, "Prediciton: {}".format("None"),
+             (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+
+
         cv2.imshow("Perception project", track_frame)
+
         if cv2.waitKey(1) & 0xFF == ord('q'): #stop on q
                 break
         
     cv2.destroyAllWindows()
+
+    
