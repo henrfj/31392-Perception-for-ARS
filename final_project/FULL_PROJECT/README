@@ -3,3 +3,7 @@ To run the program, rectified images must be uploaded in following path format
 "conveyor_full_without/right/*.png"
 "conveyor_full_with/left/*.png"
 "conveyor_full_with/right/*.png"
+
+# Changelog Lukas 6.5.2022 15:24
+- mapping matrix moved from the loop to the start of the program, necessary for faster rectification
+- also, only left rectification is needed, right_rectified is not used in output at all
