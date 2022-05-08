@@ -160,8 +160,8 @@ class Kalman_tracker:
                 self.P = np.array([[1000, 0],
                                    [0, 1000]])
                 # Reset predictions
-                cv2.putText(frame, "Prediciton: {}".format("None"),
-                    (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                cv2.putText(frame, "PREDICTION: {}".format("None"),
+                    (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 1)
                 self.reset_predictions() 
 
         else: # Unreasonable object
@@ -176,8 +176,8 @@ class Kalman_tracker:
         self.prev_prediction = self.prediction.copy() * self.e_trace
 
         if np.sum(self.prediction)>0.05: # Some certainty
-            cv2.putText(frame, "Prediciton: {}".format(self.pred[np.argmax(self.prediction)]),
-             (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+            cv2.putText(frame, "PREDICTION: {}".format(self.pred[np.argmax(self.prediction)]),
+             (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 1)
 
         return frame, self.states.reshape((2,)), z.reshape((2,)), self.prediction
 

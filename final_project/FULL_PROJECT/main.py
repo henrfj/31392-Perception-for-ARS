@@ -1,5 +1,6 @@
 import glob
 import cv2
+from cv2 import bitwise_and
 import numpy as np
 from kalman_tracker import Kalman_tracker
 from tensorflow import keras
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     # or run with the following:
     #################################################
 
-    create_output_video = False
+    create_output_video = True
 
     ################# Initializations #################
     cnn_model = keras.models.load_model('C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/FULL_PROJECT/cnn_model_3');
@@ -31,8 +32,13 @@ if __name__ == "__main__":
     #path_right = "conveyor_full_without/right/*.png"
     # path_left = "conveyor_full_with/left/*.png"
     # path_right = "conveyor_full_with/right/*.png"
+    
+    # Occlusion
     path_left = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/with_occlusions/left/*.png"
     path_right = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/with_occlusions/right/*.png"
+    # Non
+    #path_left = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/left/*.png"
+    #path_right = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/right/*.png"
 
     images_left = glob.glob(path_left)
     assert images_left, "No images found in {}".format(path_left)
@@ -43,7 +49,7 @@ if __name__ == "__main__":
     if create_output_video:
         img_buffer = []
         FPS = 30 
-        out = cv2.VideoWriter('project.avi',cv2.VideoWriter_fourcc(*'DIVX'), FPS, size)
+        out = cv2.VideoWriter('final_video/project.avi',cv2.VideoWriter_fourcc(*'DIVX'), FPS, size)
 
     # MAIN
     no_of_frames = len(images_left)
@@ -54,8 +60,7 @@ if __name__ == "__main__":
     gray_right = cv2.cvtColor(
         cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/right/1585434279_805531979_Right.png"), cv2.COLOR_BGR2GRAY)
     depth_map = get_depth_map(gray_left, gray_right)
-    plt.imshow(depth_map, cmap="gray")
-    plt.show()
+
 
     for i in range(no_of_frames):
         frame_left = cv2.imread(images_left[i])
@@ -66,15 +71,27 @@ if __name__ == "__main__":
         centroidx, centroidy = filtered[0], filtered[1]
         z       = compute_depth(centroidx, centroidy, depth_map)
 
+
+        # ADD TEXT
+        cv2.putText(track_frame, "________________",
+            (700, 420), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+        cv2.putText(track_frame, "green = measured   red = filtered",
+            (700, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        cv2.putText(track_frame, "pixel X: {}".format(str(np.int32(centroidx))),
+            (700, 460), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        cv2.putText(track_frame, "pixel Y: {}".format(str(np.int32(centroidy))),
+            (700, 480), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         if z==0: # no depth
-            cv2.putText(track_frame, "Depth: {}".format("not available"),
-                        (700, 600), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+            cv2.putText(track_frame, "depth Z: {}".format("not available"),
+                        (700, 500), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         else: # Depth
-            cv2.putText(track_frame, "Depth: {}".format(str(z)),
-                        (700, 600), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+            cv2.putText(track_frame, "depth Z: {}".format(str(120-np.round(z,2))),
+                        (700, 500), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+
 
         if create_output_video:
-            img_buffer.append(frame_left)
+            img_buffer.append(track_frame)
         
         #Add more text to frame
         cv2.imshow("Perception project", track_frame) #roi
