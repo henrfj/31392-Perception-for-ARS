@@ -4,6 +4,7 @@ import numpy as np
 from kalman_tracker import Kalman_tracker
 from tensorflow import keras
 from calib import *
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     ###################### for proper jupyter imports:
@@ -49,11 +50,12 @@ if __name__ == "__main__":
 
     # GRAYSCALE
     gray_left = cv2.cvtColor(
-        cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/with_occlusions/left/1585434750_371934652_Left.png"), cv2.COLOR_BGR2GRAY)
+        cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/left/1585434279_805531979_Left.png"), cv2.COLOR_BGR2GRAY)
     gray_right = cv2.cvtColor(
-        cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/with_occlusions/right/1585434750_371934652_Right.png"), cv2.COLOR_BGR2GRAY)
+        cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/right/1585434279_805531979_Right.png"), cv2.COLOR_BGR2GRAY)
     depth_map = get_depth_map(gray_left, gray_right)
-
+    plt.imshow(depth_map, cmap="gray")
+    plt.show()
 
     for i in range(no_of_frames):
         frame_left = cv2.imread(images_left[i])
@@ -75,17 +77,15 @@ if __name__ == "__main__":
             img_buffer.append(frame_left)
         
         #Add more text to frame
-
         cv2.imshow("Perception project", track_frame) #roi
 
         if cv2.waitKey(1) & 0xFF == ord('q'): #stop on q
                 break
 
-        print("\rFrame {}/{}".format(i+1, no_of_frames+1), end="")
+        #print("\rFrame {}/{}".format(i+1, no_of_frames+1), end="")
 
     # create_video(buffer)
     cv2.destroyAllWindows()
-    print("\nSuccessfully completed")
     if create_output_video:
         for i in range(len(img_buffer)):
             out.write(img_buffer[i])
