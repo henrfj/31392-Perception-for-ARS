@@ -136,7 +136,8 @@ class Kalman_tracker:
                     gray_object = np.array([
                                         cv2.cvtColor(ncrop_img, cv2.COLOR_RGB2GRAY).reshape((128, 128,1))
                                         ])
-                    cv2.imshow("Object", ncrop_img)
+                    if self.verbose:
+                        cv2.imshow("Object", ncrop_img)
                     #print(gray_object.shape)
                     self.prediction = np.array(cnn_model.predict(gray_object)[0])
 
@@ -168,7 +169,7 @@ class Kalman_tracker:
 
         # Kalman prediction 
         self.states, self.P = self.predict(self.states, self.P, self.F, self.u, self.Q)
-        cv2.circle(frame, (np.int32(self.states[0, 0]), np.int32(self.states[1, 0])), 8, color=(255, 0, 0), thickness=-1)
+        cv2.circle(frame, (np.int32(self.states[0, 0]), np.int32(self.states[1, 0])), 8, color=(0, 0, 255), thickness=-1)
 
         # Eligibility decay
         self.prediction += self.prev_prediction
@@ -178,7 +179,7 @@ class Kalman_tracker:
             cv2.putText(frame, "Prediciton: {}".format(preds[np.argmax(self.prediction)]),
              (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
 
-        return frame, self.states.reshape((2,)), z.reshape((2,)), prediction
+        return frame, self.states.reshape((2,)), z.reshape((2,)), self.prediction
 
 
 if __name__ == "__main__":
@@ -216,17 +217,13 @@ if __name__ == "__main__":
     prediction = np.array([0, 0, 0])
 
     # Init tracker
-    tracker = Kalman_tracker(occlusion=True, Verbose=True, also_predict=True, model=cnn_model, eligibility_trace=0.75)
-    write = True
+    tracker = Kalman_tracker(occlusion=True, Verbose=False, also_predict=True, model=cnn_model, eligibility_trace=0.75)
     # The movie/image loop
     for i in range(no_of_frames):
         frame = cv2.imread(images[i]) 
         track_frame, filtered, measured, prediction = tracker.next_frame(frame)
 
         cv2.imshow("Perception project", track_frame)
-        if write:
-            cv2.imwrite('final_video/img'+str(i).rjust(5, "0")+'.png', track_frame)
-
         if cv2.waitKey(1) & 0xFF == ord('q'): #stop on q
                 break
 
