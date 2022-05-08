@@ -6,6 +6,5 @@ video_crop/
 images/
 henriks_images/Boxes
 henriks_images/Cups
-#small_book/
-#small_cup/
-#small_box/
+conveyor_full_without/
+conveyor_full_with/
