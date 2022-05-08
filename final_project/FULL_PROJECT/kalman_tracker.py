@@ -217,13 +217,15 @@ if __name__ == "__main__":
 
     # Init tracker
     tracker = Kalman_tracker(occlusion=True, Verbose=True, also_predict=True, model=cnn_model, eligibility_trace=0.75)
+    write = True
     # The movie/image loop
     for i in range(no_of_frames):
         frame = cv2.imread(images[i]) 
         track_frame, filtered, measured, prediction = tracker.next_frame(frame)
 
         cv2.imshow("Perception project", track_frame)
-        #cv2.imwrite('/path/to/destination/image.png', track_frame)
+        if write:
+            cv2.imwrite('final_video/img'+str(i).rjust(5, "0")+'.png', track_frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'): #stop on q
                 break
