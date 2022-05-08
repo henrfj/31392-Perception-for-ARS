@@ -139,7 +139,7 @@ class Kalman_tracker:
                     if self.verbose:
                         cv2.imshow("Object", ncrop_img)
                     #print(gray_object.shape)
-                    self.prediction = np.array(cnn_model.predict(gray_object)[0])
+                    self.prediction = np.array(self.cnn_model.predict(gray_object)[0])
 
                 # Kalman update from measurements
                 z = np.array([[centerx],  # xpos
@@ -176,7 +176,7 @@ class Kalman_tracker:
         self.prev_prediction = self.prediction.copy() * self.e_trace
 
         if np.sum(self.prediction)>0.05: # Some certainty
-            cv2.putText(frame, "Prediciton: {}".format(preds[np.argmax(self.prediction)]),
+            cv2.putText(frame, "Prediciton: {}".format(self.pred[np.argmax(self.prediction)]),
              (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
 
         return frame, self.states.reshape((2,)), z.reshape((2,)), self.prediction
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     import glob
     from tensorflow import keras
-
+    print("\n\n\n\nLocal test\n\n\n\n")
     #####################################################################################################
     #images = glob.glob("video/sample/left/*.png")
 
