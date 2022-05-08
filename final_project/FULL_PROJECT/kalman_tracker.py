@@ -145,9 +145,13 @@ class Kalman_tracker:
 
 
 if __name__ == "__main__":
+    """
+    Some Auxilliary testing.
+    """
+
     import glob
     from tensorflow import keras
-    cnn_model = keras.models.load_model('C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/FULL_PROJECT/cnn_model_3');
+    #cnn_model = keras.models.load_model('C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/FULL_PROJECT/cnn_model_3');
     #####################################################################################################
     #images = glob.glob("video/sample/left/*.png")
 
@@ -176,22 +180,25 @@ if __name__ == "__main__":
     for i in range(no_of_frames):
         frame = cv2.imread(images[i]) 
         track_frame, filtered, measured, object = tracker.next_frame(frame)
-
         # Test with some CNN model
-        if object is not None:
-            gray_object = np.array([
-                                    cv2.cvtColor(object, cv2.COLOR_RGB2GRAY).reshape((128, 128,1))
-                                    ])
-            #print(gray_object.shape)
-            prediction = cnn_model.predict(gray_object)[0]
-            cv2.putText(track_frame, "Prediciton: {}".format(preds[np.argmax(prediction)]),
-             (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
-        else:
-            cv2.putText(track_frame, "Prediciton: {}".format("None"),
-             (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+        #if object is not None:
+        #    gray_object = np.array([
+        #                            cv2.cvtColor(object, cv2.COLOR_RGB2GRAY).reshape((128, 128,1))
+        #                            ])
+        #    #print(gray_object.shape)
+        #    prediction = cnn_model.predict(gray_object)[0]
+        #    cv2.putText(track_frame, "Prediciton: {}".format(preds[np.argmax(prediction)]),
+        #     (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+        #else:
+        #    cv2.putText(track_frame, "Prediciton: {}".format("None"),
+        #     (700, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
 
 
         cv2.imshow("Perception project", track_frame)
+        #cv2.circle(frame,(np.int32(filtered[0]),np.int32(filtered[1])),5,(0,255,0), -1)
+        #if measured[0] is not None:
+        #    cv2.circle(frame,(np.int32(measured[0]),np.int32(measured[1])),5,(255,0,0), -1)
+        #cv2.imshow("Perception project", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'): #stop on q
                 break

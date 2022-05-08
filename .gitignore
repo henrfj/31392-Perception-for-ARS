@@ -4,6 +4,8 @@ augment_book/
 video/
 video_crop/
 images/
+henriks_images/Boxes
+henriks_images/Cups
 #small_book/
 #small_cup/
 #small_box/
