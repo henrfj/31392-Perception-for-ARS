@@ -1,10 +1,12 @@
 import glob
+from functions import *
 import cv2
 from cv2 import bitwise_and
 import numpy as np
-from kalman_tracker import Kalman_tracker
+from functions.kalman_tracker import Kalman_tracker
 from tensorflow import keras
-from calib import *
+from functions.calib import *
+
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
@@ -20,56 +22,40 @@ if __name__ == "__main__":
     # or run with the following:
     #################################################
 
-    create_output_video = True
-
-    ################# Initializations #################
-    cnn_model = keras.models.load_model('C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/FULL_PROJECT/cnn_model_3');
+    # INITIALIZATION
+    cnn_model = keras.models.load_model("cnn_model_3")
     tracker = Kalman_tracker(occlusion=True, Verbose=False, also_predict=True, model=cnn_model, eligibility_trace=0.75)
-
-
-    ################### Main #######################
-    #path_left = "conveyor_full_without/left/*.png"
-    #path_right = "conveyor_full_without/right/*.png"
-    # path_left = "conveyor_full_with/left/*.png"
-    # path_right = "conveyor_full_with/right/*.png"
     
-    # Occlusion
-    path_left = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/with_occlusions/left/*.png"
-    path_right = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/with_occlusions/right/*.png"
-    # Non
-    #path_left = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/left/*.png"
-    #path_right = "C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/right/*.png"
-
+    # IMPORT IMAGES
+    path_left = "with_occlusion/left/*.png" #without_occlusion
+    path_right = "with_occlusion/left/*.png" #without_occlusion
     images_left = glob.glob(path_left)
     assert images_left, "No images found in {}".format(path_left)
     images_right = glob.glob(path_right)
     assert images_right, "No images found in {}".format(path_right)
 
-    # Create video
+    # CREATE VIDEO
+    create_output_video = True
     if create_output_video:
         img_buffer = []
         FPS = 30 
-        out = cv2.VideoWriter('final_video/project.avi',cv2.VideoWriter_fourcc(*'DIVX'), FPS, size)
+        out = cv2.VideoWriter('final_video.avi',cv2.VideoWriter_fourcc(*'DIVX'), FPS, size)
+
+    # DEPTH MAP
+    rectified_left = calibrate(cv2.imread("without_occlusion/left/1585434279_805531979_Left.png"))
+    rectified_right = calibrate(cv2.imread("without_occlusion/right/1585434279_805531979_Right.png"))
+    depth_map = get_depth_map(cv2.cvtColor(rectified_left, cv2.COLOR_BGR2GRAY), cv2.cvtColor(rectified_right, cv2.COLOR_BGR2GRAY))
 
     # MAIN
     no_of_frames = len(images_left)
-
-    # GRAYSCALE
-    gray_left = cv2.cvtColor(
-        cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/left/1585434279_805531979_Left.png"), cv2.COLOR_BGR2GRAY)
-    gray_right = cv2.cvtColor(
-        cv2.imread("C:/Users/henri/OneDrive/Desktop/DTU courses/31392 Perception/final_project/tracking/video/full/without_occlusions/right/1585434279_805531979_Right.png"), cv2.COLOR_BGR2GRAY)
-    depth_map = get_depth_map(gray_left, gray_right)
-
-
     for i in range(no_of_frames):
         frame_left = cv2.imread(images_left[i])
         frame_right = cv2.imread(images_right[i])
 
-        calibrated_left = calibrate(frame_left, frame_right)
-        track_frame, filtered, measured, prediction = tracker.next_frame(calibrated_left)
+        rectified_left = calibrate(frame_left)
+        track_frame, filtered, measured, prediction = tracker.next_frame(rectified_left)
         centroidx, centroidy = filtered[0], filtered[1]
-        z       = compute_depth(centroidx, centroidy, depth_map)
+        z = compute_depth(centroidx, centroidy, depth_map)
 
 
         # ADD TEXT
@@ -85,7 +71,7 @@ if __name__ == "__main__":
             cv2.putText(track_frame, "depth Z: {}".format("not available"),
                         (700, 500), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         else: # Depth
-            cv2.putText(track_frame, "depth Z: {}".format(str(120-np.round(z,2))),
+            cv2.putText(track_frame, "depth Z: {}".format(str(np.round(120-z,2))),
                         (700, 500), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
 
